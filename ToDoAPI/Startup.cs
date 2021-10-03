@@ -19,6 +19,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using ToDoAPI.Data;
+using ToDoAPI.Data.Repositories;
 using ToDoAPI.Services;
 using ToDoAPI.Settings;
 
@@ -108,6 +109,7 @@ namespace ToDoAPI
 			});
 
 			services.AddScoped(typeof(IAccountService), typeof(AccountService));
+			services.AddScoped(typeof(ITaskRepository), typeof(TaskRepository));
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

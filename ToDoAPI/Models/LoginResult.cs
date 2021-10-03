@@ -19,7 +19,7 @@ namespace ToDoAPI.Models
 		/// </summary>
 		public string Token { get; set; }
 		/// <summary>
-		/// <inheritdoc cref="OperationResult.OperationResult"/> Adds the <paramref name="token"/> to <see cref="Token"/>.
+		/// <inheritdoc cref="OperationResult()"/> Adds the <paramref name="token"/> to <see cref="Token"/>.
 		/// </summary>
 		/// <param name="token"></param>
 		public LoginResult(string token) : base()
@@ -27,7 +27,7 @@ namespace ToDoAPI.Models
 			Token = token;
 		}
 		/// <summary>
-		/// <inheritdoc cref="OperationResult.OperationResult(IEnumerable{string})"/>
+		/// <inheritdoc cref="OperationResult(IEnumerable{string})"/>
 		/// </summary>
 		/// <param name="errors"></param>
 		public LoginResult(ICollection<string> errors) : base(errors)
