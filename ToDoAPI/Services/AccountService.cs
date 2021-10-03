@@ -38,7 +38,7 @@ namespace ToDoAPI.Services
 					{
 						if(await _userManager.CheckPasswordAsync(user, credentials.Password))
 						{
-							return new LoginResult(GenerateJwtToken(user));
+							return new LoginResult(await GenerateJwtToken(user));
 						}
 						else
 						{
@@ -81,16 +81,25 @@ namespace ToDoAPI.Services
 
 			return true;
 		}
-		private string GenerateJwtToken(IdentityUser user)
+		private async Task<string> GenerateJwtToken(IdentityUser user)
 		{
 			var tokenHandler = new JwtSecurityTokenHandler();
 			var key = Encoding.ASCII.GetBytes(_jwtSettings.Secret);
+
+			ICollection<Claim> claims = new List<Claim>();
+			claims.Add(new Claim("id", user.Id));
+			claims.Add(new Claim(JwtRegisteredClaimNames.Sub, user.Email));
+			claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
+
+			var roles = await _userManager.GetRolesAsync(user);
+			foreach (var role in roles)
+			{
+				claims.Add(new Claim(ClaimTypes.Role, role));
+			}
+
 			var tokenDescriptor = new SecurityTokenDescriptor
 			{
-				Subject = new ClaimsIdentity(new[]
-				{
-					new Claim("id", user.Id)
-				}),
+				Subject = new ClaimsIdentity(claims),
 				Expires = null,
 				SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
 			};
