@@ -172,10 +172,17 @@ namespace ToDoAPI
 				Email = "user@email.com",
 				UserName = "user@email.com"
 			};
+			IdentityUser user2 = new IdentityUser
+			{
+				Email = "user2@email.com",
+				UserName = "user2@email.com"
+			};
 			userManager.CreateAsync(admin, "Password@123").Wait();
 			userManager.CreateAsync(user, "Password@123").Wait();
+			userManager.CreateAsync(user2, "Password@123").Wait();
 			userManager.AddToRoleAsync(admin, "Administrator").Wait();
 			userManager.AddToRoleAsync(user, "User").Wait();
+			userManager.AddToRoleAsync(user2, "User").Wait();
 		}
 	}
 }
