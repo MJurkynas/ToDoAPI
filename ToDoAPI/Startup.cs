@@ -13,10 +13,13 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using ToDoAPI.Data;
+using ToDoAPI.Services;
 using ToDoAPI.Settings;
 
 namespace ToDoAPI
@@ -93,13 +96,18 @@ namespace ToDoAPI
 					});
 				options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
 				{
-					Reference = new OpenApiReference
-					{
-						Type = ReferenceType.SecurityScheme,
-						Id = "Bearer"
-					}
+					Description = "Bearer JWT in Authorization header",
+					In = ParameterLocation.Header,
+					Type = SecuritySchemeType.ApiKey,
+					Scheme = "Bearer",
+					Name = "Authorization"
 				});
+				var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+				var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+				options.IncludeXmlComments(xmlPath);
 			});
+
+			services.AddScoped(typeof(IAccountService), typeof(AccountService));
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
