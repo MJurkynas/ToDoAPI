@@ -185,6 +185,9 @@ namespace ToDoAPI
 			userManager.AddToRoleAsync(admin, "Administrator").Wait();
 			userManager.AddToRoleAsync(user, "User").Wait();
 			userManager.AddToRoleAsync(user2, "User").Wait();
+
+			context.Database.ExecuteSqlRaw($"INSERT INTO todotasks (UserId, Name, IsCompleted) VALUES ('{user.Id}', 'Create a task API', 1), ('{user.Id}', 'Get some sleep', 0)," +
+				$"('{user2.Id}', 'Buy a laptop', 0),('{user2.Id}', 'Harness the wind', 0)");
 		}
 	}
 }
