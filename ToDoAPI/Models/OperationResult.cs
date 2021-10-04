@@ -34,9 +34,9 @@ namespace ToDoAPI.Models
 		public OperationResult(IEnumerable<string> errors)
 		{
 			Errors = errors;
-			if (Errors.Any())
+			if (!Errors.Any())
 			{
-				Suceeded = false;
+				Suceeded = true;
 			}
 		}
 	}
