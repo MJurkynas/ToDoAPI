@@ -108,5 +108,29 @@ namespace ToDoAPI.Services
 
 			return tokenHandler.WriteToken(token);
 		}
+
+		public async Task<string> GetPasswordResetToken(string email)
+		{
+			IdentityUser user = await _userManager.FindByEmailAsync(email);
+			if(user == null)
+			{
+				throw new KeyNotFoundException($"User with {email} was not found.");
+			}
+
+			return await _userManager.GeneratePasswordResetTokenAsync(user);
+		}
+
+		public async Task<OperationResult> ResetPassword(string email, string passwordResetToken, string newPassword)
+		{
+			IdentityUser user = await _userManager.FindByEmailAsync(email);
+			if (user == null)
+			{
+				throw new KeyNotFoundException($"User with {email} was not found.");
+			}
+
+			IdentityResult resetResult = await _userManager.ResetPasswordAsync(user, passwordResetToken, newPassword);
+
+			return new OperationResult(resetResult.Errors.Select(x => x.Description));
+		}
 	}
 }

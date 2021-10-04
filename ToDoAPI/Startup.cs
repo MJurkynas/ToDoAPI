@@ -52,7 +52,8 @@ namespace ToDoAPI
 				{
 					RequiredLength = 12
 				};
-			}).AddEntityFrameworkStores<DataContext>();
+			}).AddEntityFrameworkStores<DataContext>()
+			 .AddTokenProvider<DataProtectorTokenProvider<IdentityUser>>(TokenOptions.DefaultProvider);
 
 			JwtSettings jwtSettings = new JwtSettings();
 			Configuration.Bind(nameof(jwtSettings), jwtSettings);
@@ -108,8 +109,13 @@ namespace ToDoAPI
 				options.IncludeXmlComments(xmlPath);
 			});
 
+			MailSettings mailSettings = new MailSettings();
+			Configuration.Bind(nameof(mailSettings), mailSettings);
+			services.AddSingleton(mailSettings);
+
 			services.AddScoped(typeof(IAccountService), typeof(AccountService));
 			services.AddScoped(typeof(ITaskRepository), typeof(TaskRepository));
+			services.AddScoped(typeof(IMailService), typeof(MailService));
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
