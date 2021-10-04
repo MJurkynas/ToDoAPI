@@ -27,7 +27,8 @@ namespace ToDoAPI.Models
 			Suceeded = true;
 		}
 		/// <summary>
-		/// Sets <see cref="Suceeded"/> to <c>TRUE</c> and sets the provided <paramref name="errors"/> to <see cref="Errors"/>.
+		/// Sets <see cref="Suceeded"/> to <c>TRUE</c> if an empty <paramref name="errors"/> collection was provided, else <c>FALSE</c>. 
+		/// Sets the provided <paramref name="errors"/> to <see cref="Errors"/>.
 		/// </summary>
 		/// <param name="errors"></param>
 		public OperationResult(IEnumerable<string> errors)
