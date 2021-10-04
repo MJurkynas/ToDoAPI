@@ -27,12 +27,14 @@ namespace ToDoAPI
 {
 	public class Startup
 	{
-		public Startup(IConfiguration configuration)
+		public Startup(IConfiguration configuration, IWebHostEnvironment hostEnvironment)
 		{
 			Configuration = configuration;
+			_hostEnvironment = hostEnvironment;
 		}
 
 		public IConfiguration Configuration { get; }
+		private readonly IWebHostEnvironment _hostEnvironment;
 
 		// This method gets called by the runtime. Use this method to add services to the container.
 		public void ConfigureServices(IServiceCollection services)
@@ -42,6 +44,54 @@ namespace ToDoAPI
 				options.UseMySql(mysqlConnectionString,
 				ServerVersion.AutoDetect(mysqlConnectionString)));
 
+			MailSettings mailSettings = new MailSettings();
+			Configuration.Bind(nameof(mailSettings), mailSettings);
+			services.AddSingleton(mailSettings);
+
+			JwtSettings jwtSettings = new JwtSettings();
+			Configuration.Bind(nameof(jwtSettings), jwtSettings);
+			services.AddSingleton(jwtSettings);
+
+			AddIdentityWithJwt(services, jwtSettings);
+
+			services.AddControllers();
+
+			if (_hostEnvironment.IsDevelopment())
+			{
+				AddSwaggerGen(services);
+			}
+
+			services.AddScoped(typeof(IAccountService), typeof(AccountService));
+			services.AddScoped(typeof(ITaskRepository), typeof(TaskRepository));
+			services.AddScoped(typeof(IMailService), typeof(MailService));
+		}
+
+		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+		public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+		{
+			if (env.IsDevelopment())
+			{
+				app.UseDeveloperExceptionPage();
+
+				ConfigureSwagger(app);
+
+				ConfigureDatabase(app);
+			}
+
+			app.UseHttpsRedirection();
+
+			app.UseRouting();
+
+			app.UseAuthentication();
+			app.UseAuthorization();
+
+			app.UseEndpoints(endpoints =>
+			{
+				endpoints.MapControllers();
+			});
+		}
+		private void AddIdentityWithJwt(IServiceCollection services, JwtSettings jwtSettings)
+		{
 			services.AddIdentity<IdentityUser, IdentityRole>(options =>
 			{
 				options.User = new UserOptions
@@ -53,11 +103,7 @@ namespace ToDoAPI
 					RequiredLength = 12
 				};
 			}).AddEntityFrameworkStores<DataContext>()
-			 .AddTokenProvider<DataProtectorTokenProvider<IdentityUser>>(TokenOptions.DefaultProvider);
-
-			JwtSettings jwtSettings = new JwtSettings();
-			Configuration.Bind(nameof(jwtSettings), jwtSettings);
-			services.AddSingleton(jwtSettings);
+						 .AddTokenProvider<DataProtectorTokenProvider<IdentityUser>>(TokenOptions.DefaultProvider);
 
 			services.AddAuthentication(options =>
 			{
@@ -77,13 +123,13 @@ namespace ToDoAPI
 					ValidateLifetime = false
 				};
 			});
-
-			services.AddControllers();
-
+		}
+		private void AddSwaggerGen(IServiceCollection services)
+		{
 			services.AddSwaggerGen(options =>
 			{
 				options.AddSecurityRequirement(new OpenApiSecurityRequirement
-					{
+						{
 						{
 							new OpenApiSecurityScheme
 							{
@@ -95,7 +141,7 @@ namespace ToDoAPI
 							},
 							Array.Empty<string>()
 						}
-					});
+						});
 				options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
 				{
 					Description = "Bearer JWT in Authorization header",
@@ -108,53 +154,28 @@ namespace ToDoAPI
 				var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 				options.IncludeXmlComments(xmlPath);
 			});
-
-			MailSettings mailSettings = new MailSettings();
-			Configuration.Bind(nameof(mailSettings), mailSettings);
-			services.AddSingleton(mailSettings);
-
-			services.AddScoped(typeof(IAccountService), typeof(AccountService));
-			services.AddScoped(typeof(ITaskRepository), typeof(TaskRepository));
-			services.AddScoped(typeof(IMailService), typeof(MailService));
 		}
-
-		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-		public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+		private void ConfigureSwagger(IApplicationBuilder app)
 		{
-			if (env.IsDevelopment())
+			app.UseSwagger();
+			app.UseSwaggerUI(c =>
 			{
-				app.UseDeveloperExceptionPage();
-
-				app.UseSwagger();
-				app.UseSwaggerUI(c =>
-				{
-					c.SwaggerEndpoint("/swagger/v1/swagger.json", "TODO API");
-					c.RoutePrefix = string.Empty;
-				});
-
-				using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
-				{
-					var context = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
-
-					context.Database.EnsureDeleted();
-
-					context.Database.Migrate();
-
-					SeedData(context, serviceScope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>());
-				}
-			}
-
-			app.UseHttpsRedirection();
-
-			app.UseRouting();
-
-			app.UseAuthentication();
-			app.UseAuthorization();
-
-			app.UseEndpoints(endpoints =>
-			{
-				endpoints.MapControllers();
+				c.SwaggerEndpoint("/swagger/v1/swagger.json", "TODO API");
+				c.RoutePrefix = string.Empty;
 			});
+		}
+		private void ConfigureDatabase(IApplicationBuilder app)
+		{
+			using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
+			{
+				var context = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
+
+				context.Database.EnsureDeleted();
+
+				context.Database.Migrate();
+
+				SeedData(context, serviceScope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>());
+			}
 		}
 		private void SeedData(DataContext context, UserManager<IdentityUser> userManager)
 		{
